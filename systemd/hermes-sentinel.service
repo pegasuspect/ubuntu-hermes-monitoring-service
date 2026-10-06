@@ -1,0 +1,28 @@
+[Unit]
+Description=Hermes Sentinel - Security monitor with Signal alerts
+# Runs as a user service; requires lingering so it starts at boot
+# without login (loginctl enable-linger <user>), and wants signal-cli
+# up so alerts can go out (it will queue and retry if it isn't).
+# NOTE: install.sh rewrites %h/projects/... to the actual checkout path.
+After=network-online.target signal-cli.service
+Wants=network-online.target
+Wants=signal-cli.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m hermes_sentinel run
+WorkingDirectory=%h/projects/ubuntu-hermes-monitoring-service
+# Personal values (SIGNAL_ACCOUNT/SIGNAL_RECIPIENT/SIGNAL_ALLOWED_USERS)
+# come from %h/.config/hermes-sentinel/env or the project .env file.
+EnvironmentFile=-%h/.config/hermes-sentinel/env
+Environment="PYTHONUNBUFFERED=1"
+Environment="HERMES_HOME=%h/.hermes"
+Restart=on-failure
+RestartSec=10
+Nice=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

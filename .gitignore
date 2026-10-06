@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local secrets / personal config — never commit
+.env
+config/sentinel.local.yaml
+
+# Runtime state (if tests were run locally)
+*.log

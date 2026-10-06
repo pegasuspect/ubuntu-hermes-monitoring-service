@@ -1,0 +1,82 @@
+# hermes-sentinel configuration — TEMPLATE (safe to commit)
+#
+# Personal values (Signal number, alert recipient, trusted senders) are
+# NOT stored in this file. Provide them via environment variables or a
+# git-ignored config/sentinel.local.yaml (see sentinel.local.yaml.example).
+#
+# Resolution order per key (first wins):
+#   1. Environment variable:
+#        SIGNAL_ACCOUNT        linked Signal number (the account)
+#        SIGNAL_RECIPIENT      where alerts go (phone, or "group:<base64>")
+#        SIGNAL_HTTP_URL       signal-cli daemon URL (default http://127.0.0.1:8099)
+#        SIGNAL_ALLOWED_USERS  comma-separated trusted senders
+#        NOTIFY_ON             e.g. "warning,critical" or "info,warning,critical"
+#        AUTH_LOG_PATH         system auth log path
+#   2. config/sentinel.local.yaml (not committed)
+#   3. This template / built-in defaults
+#
+# A .env file in the project root is loaded automatically (real
+# environment variables still take precedence over it).
+
+# Cadence: log-tailing detectors sweep this often (seconds)
+tail_interval: 5.0
+# State/integrity detectors sweep this often
+poll_interval: 10.0
+# Same fingerprint re-alerts only after this cooldown (seconds)
+cooldown: 900.0
+# After this many repeats, severity escalates to critical
+escalate_after: 3
+
+# Severity levels that trigger a Signal message: info, warning, critical
+notify_on: [warning, critical]
+
+signal:
+  # Local signal-cli JSON-RPC daemon (same one the hermes gateway uses)
+  http_url: http://127.0.0.1:8099
+  # account / recipient come from SIGNAL_ACCOUNT / SIGNAL_RECIPIENT
+  send_timeout: 15.0
+  retry: 2
+  retry_backoff: 30.0
+
+heartbeat:
+  expected_interval: 60.0   # gateway writes state/gateway.heartbeat every ~60s
+  stale_after: 180.0         # alert if heartbeat older than this
+  grace: 60.0               # ignore staleness right after sentinel starts
+
+restart_storm:
+  window: 300.0              # count gateway starts within this window
+  threshold: 3
+
+brute_force:
+  window: 300.0             # failed SSH attempts counted within this window
+  threshold: 10
+
+paths:
+  state_file: ~/.local/state/hermes-sentinel/state.json
+  log_file: ~/.local/state/hermes-sentinel/sentinel.log
+  auth_log: /var/log/auth.log
+
+detectors:
+  hermes_logs: true
+  gateway_state: true
+  integrity: true
+  sessions: true
+  system_auth: true
+
+integrity:
+  files:
+    - ~/.hermes/auth.json
+    - ~/.hermes/.env
+    - ~/.hermes/config.yaml
+  # Note: channel_directory.json is excluded — the gateway rewrites it
+  # periodically (new inode each time), which would spam false alerts.
+
+# Trusted senders come from SIGNAL_ALLOWED_USERS (comma-separated) or
+# sentinel.local.yaml. New DM sessions from anyone else raise a warning.
+allowed_users: []
+
+# Optional: mute info-level alerts at night (24h clock; wraps midnight)
+# quiet_hours:
+#   start: "23:00"
+#   end: "07:00"
+#   mute_info: true

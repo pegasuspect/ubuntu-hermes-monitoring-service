@@ -1,0 +1,15 @@
+# Local configuration with personal values — DO NOT COMMIT
+# Copy to config/sentinel.local.yaml and fill in your real numbers.
+# This file is loaded automatically (before the committed template).
+
+signal:
+  # Your linked Signal number (the signal-cli account)
+  account: "+15555550100"
+  # Where alerts are delivered: a phone number for DMs, or
+  # "group:<base64 group id>" to alert into a Signal group
+  recipient: "+15555550100"
+
+# Senders considered trusted. New Signal DM sessions from numbers not
+# on this list raise a warning.
+allowed_users:
+  - "+15555550100"
